@@ -63,6 +63,7 @@ import struct
 
 #read PLC type
 # cpu_type, cpu_code = pymc3e.read_cputype()
+# print(cpu_type,cpu_code)
 
 #Unlock PLC,
 #If you set PLC to locked, you need to unlkock to remote operation
@@ -75,13 +76,36 @@ import struct
 #Lock PLC
 # pymc3e.remote_lock(password="1234")
 # pymc3e.remote_lock(request_input=True)
-model_name = ""
-wordunits_values = [22084,22084]
-# model = (struct.pack('H',wordunits_values)).decode("UTF-8")
-# model = list(map(lambda x : (struct.pack('H',x)).decode("UTF-8")  , wordunits_values))
-model = [(struct.pack('H',x)).decode("UTF-8") for x in wordunits_values]
-for r in model :
-    model_name += r
 
-print(model_name)
-# print(cpu_type,cpu_code)
+
+# ///////////////////////////////////////////////////
+def main():
+    pymc3e = pymcprotocol.Type3E()
+    pymc3e.setaccessopt(commtype="binary")
+    pymc3e.connect("192.168.3.39", 2000)
+    cpu_type, cpu_code = pymc3e.read_cputype()
+    print(cpu_type,cpu_code)
+
+    def readsting(head,size):
+        sumdata = ""
+        getdata = pymc3e.batchread_wordunits(headdevice=head, readsize=size)
+        convert = list(map(lambda x : (struct.pack('H',x)).decode("UTF-8")  , getdata))
+        for r in convert :
+            sumdata += r
+        return sumdata
+
+    def readword(head):
+        getdata = pymc3e.batchread_wordunits(headdevice=head, readsize=1)
+        return getdata
+
+    def readarray(head,size):
+        getdata = pymc3e.batchread_wordunits(headdevice=head, readsize=size)
+        return getdata
+
+    a = readword("D100")
+    b =  readsting("D200",10)
+    print(a,b)
+
+
+if __name__ == "__main__":
+    main()
